@@ -10,7 +10,7 @@ def send_to_slack(message, webhook_url):
     return response.status_code == 200
 
 # 🔗 Your Slack Webhook URL here
-WEBHOOK_URL = "https://hooks.slack.com/services/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"
+WEBHOOK_URL = "https://hooks.slack.com/services/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"
 
 # === CRIME DATA SETUP ===
 # Constants
@@ -76,11 +76,18 @@ if response.status_code == 200:
             
             # Slack message
             slack_message = (
-                f"📊 *PG County Weekly Crime Summary*\n"
-                f"📅 Period: {start_date_str} to {end_date_str}\n"
-                f"🔢 Total Violent Crimes: {violent_crime_count}\n"
-                f"🔍 Breakdown: {crime_breakdown}"
-            )
+    f"📊 *PG County Weekly Crime Summary*\n"
+    f"📅 *Period:* {start_date_str} to {end_date_str}\n"
+    f"🔢 *Total Violent Crimes:* {violent_crime_count}\n"
+    f"🔍 *Breakdown:* {crime_breakdown}\n\n"
+    f"🌐 *Resources:*\n"
+    f"• [Crime Map & Stats](https://www.princegeorgescountymd.gov/345/Public-Safety)\n"
+    f"• [Submit a Tip](https://www.pgcrimesolvers.com/)\n"
+    f"• [Join/Start a Neighborhood Watch](https://www.princegeorgescountymd.gov/849/Neighborhood-Watch)\n\n"
+    f"📢 *Action You Can Take:*\n"
+    f"If you see something suspicious, say something. Stay alert and connected.\n"
+)
+
         else:
             slack_message = f"✅ No violent crimes reported in PG County from {start_date_str} to {end_date_str}."
         
