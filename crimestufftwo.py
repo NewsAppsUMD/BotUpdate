@@ -2,6 +2,17 @@ import requests
 from datetime import datetime, timedelta
 from collections import Counter  # 🔑 For counting crime types
 
+# === SLACK SETUP ===
+def send_to_slack(message, webhook_url):
+    payload = {"text": message}
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(webhook_url, json=payload, headers=headers)
+    return response.status_code == 200
+
+# 🔗 Your Slack Webhook URL here
+WEBHOOK_URL = "https://hooks.slack.com/services/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"
+
+# === CRIME DATA SETUP ===
 # Constants
 URL = "https://data.princegeorgescountymd.gov/resource/xjru-idbe.json"
 
@@ -29,7 +40,7 @@ if response.status_code == 200:
     violent_crimes = ['HOMICIDE', 'ASSAULT', 'ROBBERY', 'SEX OFFENSE', 'SHOOTING']
     
     violent_crime_count = 0
-    crime_type_counter = Counter()  # 🧮 Count each type of violent crime
+    crime_type_counter = Counter()
     crime_summaries = []
     
     if data:
@@ -38,7 +49,7 @@ if response.status_code == 200:
             
             if any(violent in crime_type for violent in violent_crimes):
                 violent_crime_count += 1
-                crime_type_counter[crime_type] += 1  # ⬅️ Count this crime type
+                crime_type_counter[crime_type] += 1
                 crime_date = crime.get('date', 'Unknown Date')
                 street_address = crime.get('street_address', 'Unknown Address')
                 
@@ -48,25 +59,37 @@ if response.status_code == 200:
                     f"🔪 Type: {crime_type}\n"
                     f"📍 Address: {street_address}\n"
                 )
-                
                 crime_summaries.append(formatted)
         
         if violent_crime_count > 0:
+            # Print locally
             print(f"\n🧾 Summary of Violent Crimes from {start_date_str} to {end_date_str}:\n")
             for summary in crime_summaries:
                 print(summary)
-            
             print(f"\n📊 Total Violent Crimes: {violent_crime_count}")
             
-            # 🔠 Build summary line with breakdown
+            # Create breakdown
             crime_breakdown = ', '.join([
-                f"{count} {ctype.lower()}{'s' if count > 1 else ''}" 
+                f"{count} {ctype.lower()}{'s' if count > 1 else ''}"
                 for ctype, count in crime_type_counter.items()
             ])
             
-            print(f"\n🗒️ Summary: Between {start_date_str} and {end_date_str}, there were {violent_crime_count} violent crimes reported. Breakdown: {crime_breakdown}.")
+            # Slack message
+            slack_message = (
+                f"📊 *PG County Weekly Crime Summary*\n"
+                f"📅 Period: {start_date_str} to {end_date_str}\n"
+                f"🔢 Total Violent Crimes: {violent_crime_count}\n"
+                f"🔍 Breakdown: {crime_breakdown}"
+            )
         else:
-            print(f"\n✅ No violent crimes reported between {start_date_str} and {end_date_str}.")
+            slack_message = f"✅ No violent crimes reported in PG County from {start_date_str} to {end_date_str}."
+        
+        # Send to Slack
+        if send_to_slack(slack_message, WEBHOOK_URL):
+            print("✅ Slack notification sent.")
+        else:
+            print("❌ Failed to send Slack notification.")
+
     else:
         print(f"\n⚠️ No data available for the specified range.")
 else:
