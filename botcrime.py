@@ -1,12 +1,39 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import Counter
+from dotenv import load_dotenv
+import os# 🔑 For counting crime types
 
+load_dotenv()
+WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
+
+# === SLACK SETUP ===
+def send_to_slack(message, webhook_url):
+    payload = {"text": message}
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(webhook_url, json=payload, headers=headers)
+    return response.status_code == 200
+
+# 🔗 Your Slack Webhook URL here
+WEBHOOK_URL = "https://hooks.slack.com/services/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"
+
+# === CRIME DATA SETUP ===
 # Constants
 URL = "https://data.princegeorgescountymd.gov/resource/xjru-idbe.json"
 
-# Define the date range from March 21st to March 28th
-start_date_str = '2025-03-21'
-end_date_str = '2025-03-28'
+# Today
+today = datetime.today().date()
+
+# Calculate last Friday
+days_since_friday = (today.weekday() - 4) % 7
+last_friday = today - timedelta(days=days_since_friday)
+
+# Calculate previous Friday (2 weeks before last Friday)
+previous_friday = last_friday - timedelta(days=14)
+
+# Format date strings
+start_date_str = previous_friday.isoformat()
+end_date_str = last_friday.isoformat()
 
 # Fetch the data from the specified date range
 url_with_dates = f"{URL}?$where=date >= '{start_date_str}' AND date <= '{end_date_str}'&$order=date DESC"
@@ -15,37 +42,67 @@ response = requests.get(url_with_dates)
 if response.status_code == 200:
     data = response.json()
     
-    # Define violent crime types
     violent_crimes = ['HOMICIDE', 'ASSAULT', 'ROBBERY', 'SEX OFFENSE', 'SHOOTING']
     
-    # Initialize counters and summary lists
     violent_crime_count = 0
+    crime_type_counter = Counter()
     crime_summaries = []
     
-    # Process the data for violent crimes
     if data:
         for crime in data:
             crime_type = crime.get('clearance_code_inc_type', 'Unknown').upper()
             
-            # Check if the crime is violent
             if any(violent in crime_type for violent in violent_crimes):
                 violent_crime_count += 1
+                crime_type_counter[crime_type] += 1
                 crime_date = crime.get('date', 'Unknown Date')
                 street_address = crime.get('street_address', 'Unknown Address')
-                crime_summaries.append(f"Date: {crime_date}, Type: {crime_type}, Address: {street_address}")
+                
+                formatted = (
+                    f"\n--- Crime #{violent_crime_count} ---\n"
+                    f"📅 Date: {crime_date}\n"
+                    f"🔪 Type: {crime_type}\n"
+                    f"📍 Address: {street_address}\n"
+                )
+                crime_summaries.append(formatted)
         
-        # If there are violent crimes, summarize
         if violent_crime_count > 0:
-            print(f"\nSummary of Violent Crimes from {start_date_str} to {end_date_str}:")
+            # Print locally
+            print(f"\n🧾 Summary of Violent Crimes from {start_date_str} to {end_date_str}:\n")
             for summary in crime_summaries:
                 print(summary)
+            print(f"\n📊 Total Violent Crimes: {violent_crime_count}")
             
-            # Compose a summary in a few sentences
-            print(f"\nTotal Violent Crimes: {violent_crime_count}")
-            print(f"\nSummary: The past week ({start_date_str} to {end_date_str}) saw a total of {violent_crime_count} violent incidents. These incidents included assault, shooting, and other violent crimes. Notable locations included {', '.join([summary.split('Address: ')[-1] for summary in crime_summaries])}.")
+            # Create breakdown
+            crime_breakdown = ', '.join([
+                f"{count} {ctype.lower()}{'s' if count > 1 else ''}"
+                for ctype, count in crime_type_counter.items()
+            ])
+            
+            # Slack message
+            slack_message = (
+    f"📊 *PG County Weekly Crime Summary*\n"
+    f"📅 *Period:* {start_date_str} to {end_date_str}\n"
+    f"🔢 *Total Violent Crimes:* {violent_crime_count}\n"
+    f"🔍 *Breakdown:* {crime_breakdown}\n\n"
+    f"🌐 *Resources:*\n"
+    f"• [Daily Crime Report](https://dailycrime.princegeorgescountymd.gov/)\n"
+    f"• [Submit a Tip](https://www.pgcrimesolvers.com/)\n"
+    f"• [PG County Police Important Numbers](https://www.princegeorgescountymd.gov/departments-offices/police/important-phone-numbers/)\n\n"
+    f"📢 *Action You Can Take:*\n"
+    f"If you see something suspicious, say something. Stay alert and connected.\n"
+)
+
         else:
-            print(f"\nNo violent crimes reported between {start_date_str} and {end_date_str}.")
+            slack_message = f"✅ No violent crimes reported in PG County from {start_date_str} to {end_date_str}."
+        
+        # Send to Slack
+        if send_to_slack(slack_message, WEBHOOK_URL):
+            print("✅ Slack notification sent.")
+        else:
+            print("❌ Failed to send Slack notification.")
+
     else:
-        print(f"\nNo data available for the specified range.")
+        print(f"\n⚠️ No data available for the specified range.")
 else:
-    print(f"Error fetching data: {response.status_code}")
+    print(f"❌ Error fetching data: {response.status_code}") 
