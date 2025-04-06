@@ -15,7 +15,7 @@ def send_to_slack(message, webhook_url):
     return response.status_code == 200
 
 # 🔗 Your Slack Webhook URL here
-WEBHOOK_URL = "https://hooks.slack.com/services/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"
+WEBHOOK_URL = "https://hooks.slack.com/services/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"
 
 # === CRIME DATA SETUP ===
 # Constants
@@ -106,3 +106,4 @@ if response.status_code == 200:
         print(f"\n⚠️ No data available for the specified range.")
 else:
     print(f"❌ Error fetching data: {response.status_code}") 
+    
