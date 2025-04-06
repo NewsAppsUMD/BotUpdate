@@ -14,7 +14,7 @@ def send_to_slack(message, webhook_url):
     response = requests.post(webhook_url, json=payload, headers=headers)
     return response.status_code == 200
 
-# 🔗 Your Slack Webhook URL here
+# = Slack Webhook URL here
 WEBHOOK_URL = "https://hooks.slack.com/services/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"
 
 # === CRIME DATA SETUP ===
@@ -24,18 +24,18 @@ URL = "https://data.princegeorgescountymd.gov/resource/xjru-idbe.json"
 # Today
 today = datetime.today().date()
 
-# Calculate last Friday
+# Calculating last Friday
 days_since_friday = (today.weekday() - 4) % 7
 last_friday = today - timedelta(days=days_since_friday)
 
-# Calculate previous Friday (2 weeks before last Friday)
+# Calculating previous Friday (2 weeks before last Friday)
 previous_friday = last_friday - timedelta(days=14)
 
-# Format date strings
+# Formatring date strings
 start_date_str = previous_friday.isoformat()
 end_date_str = last_friday.isoformat()
 
-# Fetch the data from the specified date range
+# Fetching the data from the specified date range
 url_with_dates = f"{URL}?$where=date >= '{start_date_str}' AND date <= '{end_date_str}'&$order=date DESC"
 response = requests.get(url_with_dates)
 
@@ -73,7 +73,7 @@ if response.status_code == 200:
                 print(summary)
             print(f"\n📊 Total Violent Crimes: {violent_crime_count}")
             
-            # Create breakdown
+            # Creating breakdown
             crime_breakdown = ', '.join([
                 f"{count} {ctype.lower()}{'s' if count > 1 else ''}"
                 for ctype, count in crime_type_counter.items()
@@ -96,7 +96,7 @@ if response.status_code == 200:
         else:
             slack_message = f"✅ No violent crimes reported in PG County from {start_date_str} to {end_date_str}."
         
-        # Send to Slack
+        # Sending to Slack
         if send_to_slack(slack_message, WEBHOOK_URL):
             print("✅ Slack notification sent.")
         else:
