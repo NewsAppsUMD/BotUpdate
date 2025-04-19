@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PG County Crime Summary</title>
+</head>
+<body>
+    <h1>📊 PG County Violent Crime Summary</h1>
+
+    {% if crime_counts %}
+        <ul>
+        {% for crime, count in crime_counts.items() %}
+            <li><strong>{{ crime.title() }}</strong>: {{ count }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No violent crimes reported for this time period.</p>
+    {% endif %}
+
+    <p><a href="/map">View Crime Map 🗺️</a></p>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PG County Crime Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Violent Crimes in PG County</h1>
+
+    <div id="map"></div>
+
+    <p><a href="/">Back to Summary 📄</a></p>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([38.8261, -76.8512], 10); // Centered roughly on PG County
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © OpenStreetMap contributors',
+            maxZoom: 18,
+        }).addTo(map);
+
+        var crimes = {{ crimes|tojson }};
+
+        crimes.forEach(function(crime) {
+            L.marker([crime.lat, crime.lng])
+                .addTo(map)
+                .bindPopup(`<b>${crime.type}</b><br>${crime.address}`);
+        });
+    </script>
+</body>
+</html>

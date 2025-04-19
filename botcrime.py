@@ -4,18 +4,37 @@ from collections import Counter
 from dotenv import load_dotenv
 import os# 🔑 For counting crime types
 
+
+
 load_dotenv()
-WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
-# === SLACK SETUP ===
-def send_to_slack(message, webhook_url):
-    payload = {"text": message}
-    headers = {'Content-Type': 'application/json'}
-    response = requests.post(webhook_url, json=payload, headers=headers)
-    return response.status_code == 200
+# Retrieve the variables
+slack_bot_token = os.getenv("SLACK_BOT_TOKEN")
+slack_channel = os.getenv("SLACK_CHANNEL")
 
-# = Slack Webhook URL here
-WEBHOOK_URL = "https://hooks.slack.com/services/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"
+print(f"SLACK_BOT_TOKEN: {slack_bot_token}")
+print(f"SLACK_CHANNEL: {slack_channel}")
+
+
+
+
+#load_dotenv()
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_CHANNEL = os.getenv("SLACK_CHANNEL", "#general")  # Set your target channel name or ID
+client = WebClient(token=SLACK_BOT_TOKEN)
+
+def send_to_slack(message):
+    try:
+        response = client.chat_postMessage(channel=SLACK_CHANNEL, text=message)
+        return response["ok"]
+    except SlackApiError as e:
+        print(f"Slack API Error: {e.response['error']}")
+        return False
+
+
 
 # === CRIME DATA SETUP ===
 # Constants
@@ -97,7 +116,7 @@ if response.status_code == 200:
             slack_message = f"✅ No violent crimes reported in PG County from {start_date_str} to {end_date_str}."
         
         # Sending to Slack
-        if send_to_slack(slack_message, WEBHOOK_URL):
+        if send_to_slack(slack_message):
             print("✅ Slack notification sent.")
         else:
             print("❌ Failed to send Slack notification.")
@@ -106,4 +125,3 @@ if response.status_code == 200:
         print(f"\n⚠️ No data available for the specified range.")
 else:
     print(f"❌ Error fetching data: {response.status_code}") 
-    
