@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PG County Crime Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PG County Crime Heatmap</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
@@ -12,28 +13,32 @@
     </style>
 </head>
 <body>
-    <h1>🗺️ Violent Crimes in PG County</h1>
-
+    <h1>🔥 PG County Violent Crime Heatmap</h1>
     <div id="map"></div>
-
     <p><a href="/">Back to Summary 📄</a></p>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
-        var map = L.map('map').setView([38.8261, -76.8512], 10); // Centered roughly on PG County
+        var map = L.map('map').setView([38.8261, -76.8512], 10); // Centered on PG County
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data © OpenStreetMap contributors',
             maxZoom: 18,
         }).addTo(map);
 
-        var crimes = {{ crimes|tojson }};
-
-        crimes.forEach(function(crime) {
-            L.marker([crime.lat, crime.lng])
-                .addTo(map)
-                .bindPopup(`<b>${crime.type}</b><br>${crime.address}`);
+        var crimes = {{ crimes | tojson }};
+        
+        // Convert crime locations to heatmap format [lat, lng, intensity (optional)]
+        var heatData = crimes.map(function(crime) {
+            return [crime.lat, crime.lng, 1];  // You could adjust intensity based on crime type
         });
+
+        var heat = L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+        }).addTo(map);
     </script>
 </body>
 </html>

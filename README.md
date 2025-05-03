@@ -1,6 +1,20 @@
 # BotUpdate
 
 
+5/3/25
+
+
+I recently transitioned my PG County crime reporting project to use a local SQLite database, which allows for much more efficient and flexible data handling. Instead of relying on repeated API calls or processing raw CSVs each time, I now store all crime records—dating from July 2023 to the present—in a structured SQL table called crimes. This table contains key fields such as the incident type, date, address, and location coordinates. With the data organized this way, I can perform real-time queries to filter by date, identify crime hotspots, or group incidents by type, all without reloading or reprocessing the entire dataset.
+
+This database setup has made it easier to support future features like customizable summaries, visual dashboards, and user queries. For example, I can now use SQL to return the number of violent crimes per day or list the most common types of assaults over a given time frame. It also lays the groundwork for future enhancements—like building a crime map or adding interactivity to the bot—by providing a reliable and queryable foundation. Having this database in place means the bot can scale more efficiently, and I can continue refining it to serve more complex needs.
+
+
+
+
+
+
+# first day
+
 I have a new plan for my bot update. I want to create a bot that would update me every time a crime is recorded in pg county. This both would preferebly tell me the details of the crime, but ultimately the most improtant part is knowing the crime that happened.
 
 So the output of this bot is that it would first notify me whether or not a violent or nonviolent crime took place. It would then tell me the type of crime that happened such as murder , or unarmed robbery. Finally it will tell me the location of where the crime took place.
