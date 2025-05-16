@@ -51,15 +51,7 @@
         <h3>Top Crimes This Year</h3>
         <canvas id="yearlyTopCrimeChart"></canvas>
     </div>
-<div class="chart-container">
-    <h3>Montgomery County Crime Trends (2023–2025)</h3>
-    <canvas id="mocoCrimeTrendChart"></canvas>
-</div>
 
-<div class="chart-container">
-    <h3>Top 10 Cities with Most Crime in 2025 (Montgomery County)</h3>
-    <canvas id="mocoTopCitiesChart"></canvas>
-</div>
     <script>
         // Chart 1: Monthly violent trends
         fetch('/api/violent_trends')
@@ -177,77 +169,7 @@
                 document.body.innerHTML += `<p style="color:red;">Failed to load chart data: ${err}</p>`;
                 console.error("Error loading charts:", err);
             });
-// Chart 4 & 5: Montgomery County crime visuals
-fetch('/api/moco_trends')
-    .then(response => response.json())
-    .then(data => {
-        // Crime Trend Over the Years
-        const trendLabels = data.yearly_crime_trend.map(item => item.year);
-        const trendCounts = data.yearly_crime_trend.map(item => item.crime_count);
 
-        new Chart(document.getElementById("mocoCrimeTrendChart"), {
-            type: 'line',
-            data: {
-                labels: trendLabels,
-                datasets: [{
-                    label: "Total Crimes per Year",
-                    data: trendCounts,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: false,
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Number of Crimes"
-                        }
-                    }
-                }
-            }
-        });
-
-        // Top 10 Cities in 2025
-        const cityLabels = data.top_cities_2025.map(item => item.city);
-        const cityCounts = data.top_cities_2025.map(item => item.crime_count);
-
-        new Chart(document.getElementById("mocoTopCitiesChart"), {
-            type: 'bar',
-            data: {
-                labels: cityLabels,
-                datasets: [{
-                    label: "Crimes Reported in 2025",
-                    data: cityCounts,
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Number of Crimes"
-                        }
-                    }
-                }
-            }
-        });
-    })
-    .catch(err => {
-        console.error("Failed to load Montgomery County charts:", err);
-    });
     </script>
 </body>
 </html>

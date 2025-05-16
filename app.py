@@ -54,27 +54,6 @@ def top_crimes():
         "top_all_this_year": top_all_this_year.to_dict(orient='records')
     })
 
-@app.route('/api/moco_trends')
-def moco_trends():
-    df = pd.read_csv('moco_crime.csv.csv', parse_dates=['Dispatch Date / Time'])
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-    df['year'] = df['dispatch_date_/_time'].dt.year
-    df['city'] = df['city'].str.upper().str.strip()
-
-    # Yearly trend: only 2023–2025
-    yearly_trend = df[df['year'].between(2023, 2025)]
-    trend_counts = yearly_trend['year'].value_counts().sort_index().reset_index()
-    trend_counts.columns = ['year', 'crime_count']
-
-    # Top cities in 2025
-    top_2025 = df[df['year'] == 2025]
-    top_cities = top_2025['city'].value_counts().head(10).reset_index()
-    top_cities.columns = ['city', 'crime_count']
-
-    return jsonify({
-        "yearly_crime_trend": trend_counts.to_dict(orient='records'),
-        "top_cities_2025": top_cities.to_dict(orient='records')
-    })
 
 
 if __name__ == '__main__':
