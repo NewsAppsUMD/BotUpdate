@@ -1,42 +1,5 @@
-# BotUpdate
+Data I used for this project:
 
+https://data.princegeorgescountymd.gov/Public-Safety/Crime-Incidents-July-2023-to-Present/xjru-idbe/data_preview
 
-5/3/25
-
-
-I recently transitioned my PG County crime reporting project to use a local SQLite database, which allows for much more efficient and flexible data handling. Instead of relying on repeated API calls or processing raw CSVs each time, I now store all crime records—dating from July 2023 to the present—in a structured SQL table called crimes. This table contains key fields such as the incident type, date, address, and location coordinates. With the data organized this way, I can perform real-time queries to filter by date, identify crime hotspots, or group incidents by type, all without reloading or reprocessing the entire dataset.
-
-This database setup has made it easier to support future features like customizable summaries, visual dashboards, and user queries. For example, I can now use SQL to return the number of violent crimes per day or list the most common types of assaults over a given time frame. It also lays the groundwork for future enhancements—like building a crime map or adding interactivity to the bot—by providing a reliable and queryable foundation. Having this database in place means the bot can scale more efficiently, and I can continue refining it to serve more complex needs.
-
-
-
-
-
-
-# first day
-
-I have a new plan for my bot update. I want to create a bot that would update me every time a crime is recorded in pg county. This both would preferebly tell me the details of the crime, but ultimately the most improtant part is knowing the crime that happened.
-
-So the output of this bot is that it would first notify me whether or not a violent or nonviolent crime took place. It would then tell me the type of crime that happened such as murder , or unarmed robbery. Finally it will tell me the location of where the crime took place.
-
-My code as of right now currently produces crimes from July 1st, even though I want it to produce a list of the crimes from the most recent day. I have to figure out away for this to be replicated.
-
-As of now my current data will be collected from the pg county open data portal. The link is currently found here: https://data.princegeorgescountymd.gov/resource/xjru-idbe.json. The data is returned in JSON format, containing crime details such as the incident type, crime category, street address, and more.
-As I stated earlier my bot should first be able to determine if the recorded crime is violent or non-violent.  However as of right now my code is only working for violent crimes, because when I attempted to create a variable to store non violent crimes for the dataset my code wasn’t working. When I run my code currently it produces: 
-🚨 Non-Violent - ACCIDENT
-📍 2116 INGRAHAM ST
-🕒 2023-07-01 00:00:00
- So right now my code does extract the location of the crime, now I just need to figure out how to get it up to date. I need to figure out away to have some sort of date variable in my data where the data stored can change automatically without manually changing the code myself. 
-
-I want my data either to store the data temporarily in memory or store it in a JSON or SQLite database for quick retrieval. Then figure out a bot system to send me notifications automatically without having to run the code.
-The first step in implementing this is to set up a script that will fetch the crime data from the Dataset. Using the library request to get the data  and pandas, json  to process and store it. Once the data is fetched, I should be able to completely categorize the crimes and format the output for the bot.
-
-Once all  this setup is complete, My bot will be able to notify details about each new crime as soon as it’s recorded, helping me stay updated in real time.
-
-Update 3/28/2025
-
-As the professor's feedback said, due to the fact, the data I'm using isn't real time and is updated weekly. Instead of notifying you about each incident, I should create some quick summaries of the previous week's incidents and compose a summary in a few sentences.  I haven't completed the goal, but I think I'm getting close to the result. Right now I'm trying to figure out how I can display all the crimes of the past week and give a quick summary. I'm having an issue with my code-producing crimes that have passed beyond a week, making my code bloated. As a result, as of right now, my code is hard coded. I have two variables, which are start_date_str = '2025-03-21'and end_date_str = '2025-03-28'. Which means, in order to get my ideal result, I have to change the value of the code. I want to figure out how to produce the correct time range without having to update my code. Honestly, what I learned about data and the process is that my understanding of API and json files has expanded. Looking at my json values, it seems to be a bunch of variables and arrays that store data we can manipulate and use later. While an API is an interchange format that uses text to store and transmit data objects consisting of name-value pairs and arrays. If I could change anything from my initial step, it would be that I would try and find real-time data.
-
-Memo 4/5/25
-
-So my goal for this bot was to create one that would update every time a crime is committed and stored into the database that the PG County site has. That was unfortunately a bit too unrealistic, and my project became focused on getting notified about violent crimes that happen in PG County. I was originally going to focus on both violent and nonviolent crime; however, the notifications and the summaries created were too much with my original code. As a result, I changed it to focus solely on violent crime. Originally my code was not working. Was it only producing crime from July 1st? With help from the professor, I realized the data I was using was not real-time and is updated weekly. So instead of being notified for each incident. It would make sense to create some quick summaries of the previous week's incidents and compose a summary in a few sentences. To solve the issue with my code only producing the crime on a specific date, I hard-coded it. I had two variables, which are start_date_str = '2025-03-21 and end_date_str = '2025-03-28. Thus, to get the result I wanted, I would have to change the value of my code each time. Now obviously I did not want to have to do that. With a tip from my professors when he suggested using Python's datetime module to avoid hard-coding date values when pulling data, especially if the relevant week runs from Friday to Friday. He provided an example of how to calculate the most recent Friday and the Friday a week prior using datetime.today() and timedelta. He noted that, since the data might be a week behind, the time range may need to extend further back (e.g., 14 days). Finally, he emphasized the importance of starting to send text messages to the Slack channel to ensure everything is working properly on that end. With this, I was able to get a summary of what I wanted without hard coding. A goal I wanted to potentially accomplish was to produce a visual showing what cities the crime took place in. So I guess I would have a visual of all the major cities in PG County. Then have some sort of symbol showing where and how many crimes took place in a city like Baltimore. I unfortunately wasn’t able to do this due to a lack of time. I’m going to try and attempt this for our final project. Overall, I did not meet my original goal of being able to create a bot to notify for each time a crime took place due to not using real-time data. However, I did have a satisfying conclusion to my project, which is that every Friday at 10 am my code runs, and I get a bot notification in Slack listing the violent crimes that took place in the past two weeks. There is no data stored in my code; however, it does fetch crime data from the API of the PG County crime website. If my bot was able to accept input from users. I would like to be able to answer questions. For example, if in the past week there was a murder. I should be able to ask it where the murder took place, and it should be able to tell me the right answer. I think a more useful version of my bot would create a visual showing where the crime took place in PG County. It’s cool to  summarized the crimes that took place, but it would be awesome for people to know where crimes took place. So if they see a pattern, they can be on guard. I was also unforunately unable to get my code to run without the Webhook, I tried using the API and it would never work.
+To start of my project was originally just a crimebot, that notifies me 10:00 am every friday if there is new crime.
