@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PG County Crime News App</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script defer src="/static/app.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+  <header>
+    <h1>📍 PG County Crime Trends</h1>
+    <p>Tracking crime increases or decreases in major cities of Prince George's County</p>
+  </header>
+
+  <main>
+    <section id="overview">
+      <h2>County-Wide Crime Trend Overview</h2>
+      <div id="summary"></div>
+    </section>
+
+    <section id="visuals">
+      <h2>City-by-City Trends</h2>
+      <canvas id="crimeChart"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    <p>📰 Powered by public PG County data | Created by Dabeluchukwu</p>
+  </footer>
+</body>
+</html>
