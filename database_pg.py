@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 # Sector-to-City mapping
 sector_map = {
@@ -35,13 +36,20 @@ def insert_crime_if_new(crime):
     sector = crime.get("pgpd_sector")
     city = sector_map.get(sector, "Unknown")
 
+    # Convert date to ISO format (YYYY-MM-DD)
+    raw_date = crime.get("date")
+    try:
+        formatted_date = datetime.strptime(raw_date, "%m/%d/%Y").strftime("%Y-%m-%d")
+    except:
+        formatted_date = None  # fallback if parsing fails
+
     try:
         cursor.execute("""
             INSERT INTO crimes (incident_case_id, date, type, address, sector, city)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
             crime.get("incident_case_id"),
-            crime.get("date"),
+            formatted_date,
             crime.get("clearance_code_inc_type"),
             crime.get("street_address"),
             sector,
@@ -52,6 +60,7 @@ def insert_crime_if_new(crime):
         pass  # Duplicate entry
     finally:
         conn.close()
+
 
 def summarize_violent_crimes(start_date, end_date):
     conn = sqlite3.connect("pg_county_crime.db")

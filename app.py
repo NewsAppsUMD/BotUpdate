@@ -1,33 +1,81 @@
-from flask import Flask, jsonify, render_template
-import sqlite3
-from datetime import datetime
+from flask import Flask, render_template, jsonify
+import pandas as pd
+from datetime import datetime  # <-- This was also missing
 
 app = Flask(__name__)
 
-@app.route("/api/trends")
-def get_trends():
-    conn = sqlite3.connect("pg_county_crime.db")
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT city, strftime('%Y', date) as year, COUNT(*) as count
-        FROM crimes
-        GROUP BY city, year
-    """)
-    rows = cursor.fetchall()
-    conn.close()
-
-    data = {}
-    for city, year, count in rows:
-        if city not in data:
-            data[city] = {}
-        data[city][year] = count
-
-    return jsonify(data)
-
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-if __name__ == "__main__":
+@app.route('/api/violent_trends')
+def violent_trends():
+    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+    df['year_month'] = df['date'].dt.to_period('M').astype(str)
+
+    violent_crimes = [
+        "HOMICIDE", "ROBBERY", "RAPE", "AGG. ASSAULT", "ASSAULT",
+        "SHOOTING", "MURDER", "CARJACKING", "ARSON", "KIDNAPPING"
+    ]
+
+    violent_df = df[df['clearance_code_inc_type'].str.upper().isin(violent_crimes)]
+    result = violent_df.groupby('year_month').size().reset_index(name='violent_crime_count')
+    return jsonify(result.to_dict(orient='records'))
+
+# ✅ Add route here
+@app.route('/api/top_crimes')
+def top_crimes():
+    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+    df["month"] = df["date"].dt.month
+    df["year"] = df["date"].dt.year
+    df["crime_type"] = df["clearance_code_inc_type"].str.upper()
+
+    violent_crimes = [
+        "HOMICIDE", "ROBBERY", "RAPE", "AGG. ASSAULT", "ASSAULT",
+        "SHOOTING", "MURDER", "CARJACKING", "ARSON", "KIDNAPPING"
+    ]
+    violent_df = df[df["crime_type"].isin(violent_crimes)]
+
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    this_month_df = violent_df[(violent_df["year"] == current_year) & (violent_df["month"] == current_month)]
+    top_violent_this_month = this_month_df["crime_type"].value_counts().head(5).reset_index()
+    top_violent_this_month.columns = ["crime_type", "count"]
+
+    this_year_df = df[df["year"] == current_year]
+    top_all_this_year = this_year_df["crime_type"].value_counts().head(5).reset_index()
+    top_all_this_year.columns = ["crime_type", "count"]
+
+    return jsonify({
+        "top_violent_this_month": top_violent_this_month.to_dict(orient='records'),
+        "top_all_this_year": top_all_this_year.to_dict(orient='records')
+    })
+
+@app.route('/api/moco_trends')
+def moco_trends():
+    df = pd.read_csv('moco_crime.csv.csv', parse_dates=['Dispatch Date / Time'])
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+    df['year'] = df['dispatch_date_/_time'].dt.year
+    df['city'] = df['city'].str.upper().str.strip()
+
+    # Yearly trend: only 2023–2025
+    yearly_trend = df[df['year'].between(2023, 2025)]
+    trend_counts = yearly_trend['year'].value_counts().sort_index().reset_index()
+    trend_counts.columns = ['year', 'crime_count']
+
+    # Top cities in 2025
+    top_2025 = df[df['year'] == 2025]
+    top_cities = top_2025['city'].value_counts().head(10).reset_index()
+    top_cities.columns = ['city', 'crime_count']
+
+    return jsonify({
+        "yearly_crime_trend": trend_counts.to_dict(orient='records'),
+        "top_cities_2025": top_cities.to_dict(orient='records')
+    })
+
+
+if __name__ == '__main__':
     app.run(debug=True)
