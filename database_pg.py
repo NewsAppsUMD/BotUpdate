@@ -1,26 +1,57 @@
-import pandas as pd
 import sqlite3
 
-# Load the CSV file
-csv_path = "Crime_Incidents_July_2023_to_Present_20250503.csv"
-crime_df = pd.read_csv(csv_path)
+def init_db():
+    conn = sqlite3.connect("pg_county_crime.db")
+    cursor = conn.cursor()
 
-# Create (or connect to) SQLite database
-db_path = "pg_county_crime.db"
-conn = sqlite3.connect(db_path)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS crimes (
+        incident_case_id TEXT PRIMARY KEY,
+        date TEXT,
+        type TEXT,
+        address TEXT,
+        sector TEXT
+    )
+    """)
 
-# Write DataFrame to a SQL table
-crime_df.to_sql("crimes", conn, if_exists="replace", index=False)
+    conn.commit()
+    conn.close()
 
-# Optional: Preview first few rows
-preview = pd.read_sql_query("SELECT * FROM crimes LIMIT 5;", conn)
-print(preview)
 
-# Optional: Show table structure
-cursor = conn.cursor()
-cursor.execute("PRAGMA table_info(crimes)")
-for col in cursor.fetchall():
-    print(col)
+def insert_crime_if_new(crime):
+    conn = sqlite3.connect("pg_county_crime.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO crimes (incident_case_id, date, type, address, sector)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            crime.get("incident_case_id"),
+            crime.get("date"),
+            crime.get("clearance_code_inc_type"),
+            crime.get("street_address"),
+            crime.get("pgpd_sector")
+        ))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass  # Duplicate entry
+    finally:
+        conn.close()
 
-# Close connection (optional if you're reusing it)
-conn.close()
+def summarize_violent_crimes(start_date, end_date):
+    conn = sqlite3.connect("pg_county_crime.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT type, COUNT(*) 
+        FROM crimes
+        WHERE date BETWEEN ? AND ?
+        AND (type LIKE '%HOMICIDE%' OR type LIKE '%ASSAULT%' OR type LIKE '%ROBBERY%' 
+             OR type LIKE '%SHOOTING%' OR type LIKE '%SEX OFFENSE%')
+        GROUP BY type
+    """, (start_date, end_date))
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+if __name__ == "__main__":
+    init_db()
