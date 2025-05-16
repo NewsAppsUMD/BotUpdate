@@ -1,91 +1,26 @@
 from flask import Flask, render_template, jsonify
 import pandas as pd
-from datetime import datetime  # <-- This was also missing
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/api/violent_trends')
-def violent_trends():
-    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-    df['year_month'] = df['date'].dt.to_period('M').astype(str)
+@app.route("/api/monthly_crime")
+def monthly_crime():
+    df = pd.read_csv("monthly_crime.csv")
+    return jsonify(df.to_dict(orient="records"))
 
-    violent_crimes = [
-        "HOMICIDE", "ROBBERY", "RAPE", "AGG. ASSAULT", "ASSAULT",
-        "SHOOTING", "MURDER", "CARJACKING", "ARSON", "KIDNAPPING"
-    ]
+@app.route("/api/crime_type_dist")
+def crime_type_dist():
+    df = pd.read_csv("crime_type_dist.csv")
+    return jsonify(df.to_dict(orient="records"))
 
-    violent_df = df[df['clearance_code_inc_type'].str.upper().isin(violent_crimes)]
-    result = violent_df.groupby('year_month').size().reset_index(name='violent_crime_count')
-    return jsonify(result.to_dict(orient='records'))
+@app.route("/api/sector_crime")
+def sector_crime():
+    df = pd.read_csv("sector_crime.csv")
+    return jsonify(df.to_dict(orient="records"))
 
-# ✅ Add route here
-@app.route('/api/top_crimes')
-def top_crimes():
-    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-    df["month"] = df["date"].dt.month
-    df["year"] = df["date"].dt.year
-    df["crime_type"] = df["clearance_code_inc_type"].str.upper()
-
-    violent_crimes = [
-        "HOMICIDE", "ROBBERY", "RAPE", "AGG. ASSAULT", "ASSAULT",
-        "SHOOTING", "MURDER", "CARJACKING", "ARSON", "KIDNAPPING"
-    ]
-    violent_df = df[df["crime_type"].isin(violent_crimes)]
-
-    current_year = datetime.now().year
-    current_month = datetime.now().month
-
-    this_month_df = violent_df[(violent_df["year"] == current_year) & (violent_df["month"] == current_month)]
-    top_violent_this_month = this_month_df["crime_type"].value_counts().head(5).reset_index()
-    top_violent_this_month.columns = ["crime_type", "count"]
-
-    this_year_df = df[df["year"] == current_year]
-    top_all_this_year = this_year_df["crime_type"].value_counts().head(5).reset_index()
-    top_all_this_year.columns = ["crime_type", "count"]
-
-    return jsonify({
-        "top_violent_this_month": top_violent_this_month.to_dict(orient='records'),
-        "top_all_this_year": top_all_this_year.to_dict(orient='records')
-    })
-
-@app.route('/api/crime_type_distribution')
-def crime_type_distribution():
-    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-
-    crime_counts = df['clearance_code_inc_type'].str.upper().value_counts().reset_index()
-    crime_counts.columns = ['crime_type', 'count']
-
-    return jsonify(crime_counts.to_dict(orient='records'))
-
-@app.route('/api/crime_by_city')
-def crime_by_city():
-    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-
-    sector_map = {
-        "H": "Hyattsville",
-        "B": "Bowie",
-        "G": "Greenbelt",
-        "W": "Oxon Hill",
-        "K": "Capitol Heights",
-        "M": "College Park"
-    }
-
-    df['city'] = df['pgpd_sector'].map(sector_map)
-    df = df.dropna(subset=['city'])
-
-    city_counts = df['city'].value_counts().reset_index()
-    city_counts.columns = ['city', 'crime_count']
-
-    return jsonify(city_counts.to_dict(orient='records'))
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

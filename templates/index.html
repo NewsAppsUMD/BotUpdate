@@ -1,262 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PG County Crime Trends</title>
+    <title>Crime in PG County is Decreasing</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding: 40px;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-        }
-        header p {
-            font-size: 1.2rem;
-            color: #555;
-        }
-        .chart-container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto 60px auto;
-        }
-        canvas {
-            width: 100% !important;
-            height: 500px !important;
-        }
-    </style>
 </head>
 <body>
-    <header>
-        <h1>How Crime Has Changed in PG County</h1>
-        <p>Tracking monthly violent crime trends across Prince George's County</p>
-    </header>
+    <h1 style="text-align:center;">Crime in PG County is Decreasing</h1>
 
-    <div class="chart-container">
-        <canvas id="violentCrimeChart"></canvas>
-    </div>
+    <h2>Total Monthly Crime</h2>
+    <canvas id="monthlyCrimeChart"></canvas>
 
-    <div class="chart-container">
-        <h3>Top Violent Crimes This Month</h3>
-        <canvas id="monthlyTopViolentChart"></canvas>
-    </div>
-
-    <div class="chart-container">
-    <h3>Top Crimes This Year</h3>
-    <canvas id="yearlyTopCrimeChart"></canvas>
-</div>
-
-<div class="chart-container">
-    <h3>Crime Type Distribution in PG County</h3>
+    <h2>Crime Type Distribution in PG County</h2>
     <canvas id="crimeTypeChart"></canvas>
-</div>
 
-<div class="chart-container">
-    <h3>Crimes by Mapped City Sector</h3>
-    <canvas id="crimeByCityChart"></canvas>
-</div>
+    <h2>Crimes by Mapped City Sector</h2>
+    <canvas id="sectorScatterChart"></canvas>
 
-
+    <!-- #comment Add summary or analysis text here under each chart -->
 
     <script>
-        // Chart 1: Monthly violent trends
-        fetch('/api/violent_trends')
-            .then(response => response.json())
-            .then(data => {
-                const labels = data.map(item => item.year_month);
-                const values = data.map(item => item.violent_crime_count);
+        // Total Monthly Crime Line Chart
+        fetch('/api/monthly_crime')
+        .then(response => response.json())
+        .then(data => {
+            const labels = data.map(d => d.year_month);
+            const counts = data.map(d => d.total_crimes);
+            new Chart(document.getElementById('monthlyCrimeChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Crimes',
+                        data: counts,
+                        fill: false,
+                        borderWidth: 2
+                    }]
+                }
+            });
+        });
 
-                new Chart(document.getElementById('violentCrimeChart'), {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Violent Crimes',
-                            data: values,
-                            fill: false,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            tension: 0.3,
-                            borderWidth: 3,
-                            pointRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Month'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Violent Crime Count'
-                                },
-                                beginAtZero: true
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
-                        }
-                    }
-                });
+        // Crime Type Distribution Line Chart
+        fetch('/api/crime_type_dist')
+        .then(response => response.json())
+        .then(data => {
+            const grouped = {};
+            data.forEach(d => {
+                if (!grouped[d.clearance_code_inc_type]) grouped[d.clearance_code_inc_type] = {};
+                grouped[d.clearance_code_inc_type][d.year_month] = d.count;
             });
 
-        // Chart 2 & 3: Top crimes from /api/top_crimes
-        fetch('/api/top_crimes')
-            .then(response => response.json())
-            .then(data => {
-                const mvLabels = data.top_violent_this_month.map(c => c.crime_type);
-                const mvCounts = data.top_violent_this_month.map(c => c.count);
-
-                new Chart(document.getElementById("monthlyTopViolentChart"), {
-                    type: 'bar',
-                    data: {
-                        labels: mvLabels,
-                        datasets: [{
-                            label: "Top Violent Crimes (This Month)",
-                            data: mvCounts,
-                            backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                            borderColor: 'rgba(255, 159, 64, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: "Number of Incidents"
-                                }
-                            }
-                        }
-                    }
-                });
-
-                const tyLabels = data.top_all_this_year.map(c => c.crime_type);
-                const tyCounts = data.top_all_this_year.map(c => c.count);
-
-                new Chart(document.getElementById("yearlyTopCrimeChart"), {
-                    type: 'bar',
-                    data: {
-                        labels: tyLabels,
-                        datasets: [{
-                            label: "Top Crimes in 2025",
-                            data: tyCounts,
-                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: "Number of Incidents"
-                                }
-                            }
-                        }
-                    }
-                });
-            })
-            .catch(err => {
-                document.body.innerHTML += `<p style="color:red;">Failed to load chart data: ${err}</p>`;
-                console.error("Error loading charts:", err);
+            const months = [...new Set(data.map(d => d.year_month))].sort();
+            const datasets = Object.keys(grouped).map((type, i) => {
+                const data = months.map(m => grouped[type][m] || 0);
+                return { label: type, data: data, fill: false, borderWidth: 1 };
             });
-// Chart 4: Crime Type Distribution
-fetch('/api/crime_type_distribution')
-    .then(response => response.json())
-    .then(data => {
-        const typeLabels = data.map(item => item.crime_type);
-        const typeCounts = data.map(item => item.count);
 
-        new Chart(document.getElementById("crimeTypeChart"), {
-            type: 'bar',
-            data: {
-                labels: typeLabels,
-                datasets: [{
-                    label: "Crime Type Frequency",
-                    data: typeCounts,
-                    backgroundColor: 'rgba(255, 205, 86, 0.6)',
-                    borderColor: 'rgba(255, 205, 86, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Number of Incidents"
-                        }
-                    }
+            new Chart(document.getElementById('crimeTypeChart'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: datasets
                 }
-            }
+            });
         });
-    })
-    .catch(err => {
-        console.error("Error loading crime type chart:", err);
+
+        // Crimes by PGPD Sector and Year (Grouped Bar Chart with Sector Codes)
+fetch('/api/sector_crime')
+  .then(response => response.json())
+  .then(data => {
+    const years = [...new Set(data.map(d => d.year))].sort();
+    const sectors = [...new Set(data.map(d => d.pgpd_sector))].sort();
+
+    const datasets = sectors.map(sector => {
+      return {
+        label: sector,
+        data: years.map(y => {
+          const match = data.find(d => d.pgpd_sector === sector && d.year === y);
+          return match ? match.crime_count : 0;
+        }),
+        borderWidth: 1
+      };
     });
 
-// Chart 5: Crime by Sector (Mapped to City)
-fetch('/api/crime_by_city')
-    .then(response => response.json())
-    .then(data => {
-        const labels = data.map(item => item.city);
-        const values = data.map(item => item.crime_count);
-
-        new Chart(document.getElementById("crimeByCityChart"), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: "Crimes by City Sector",
-                    data: values,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Number of Incidents"
-                        }
-                    }
-                }
+    new Chart(document.getElementById('sectorScatterChart'), {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Crimes by PGPD Sector and Year'
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Year'
             }
-        });
-    })
-    .catch(err => {
-        console.error("Error loading crime by city chart:", err);
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Crime Count'
+            }
+          }
+        }
+      }
     });
+  });
+
 
     </script>
 </body>
