@@ -48,9 +48,21 @@
     </div>
 
     <div class="chart-container">
-        <h3>Top Crimes This Year</h3>
-        <canvas id="yearlyTopCrimeChart"></canvas>
-    </div>
+    <h3>Top Crimes This Year</h3>
+    <canvas id="yearlyTopCrimeChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>Crime Type Distribution in PG County</h3>
+    <canvas id="crimeTypeChart"></canvas>
+</div>
+
+<div class="chart-container">
+    <h3>Crimes by Mapped City Sector</h3>
+    <canvas id="crimeByCityChart"></canvas>
+</div>
+
+
 
     <script>
         // Chart 1: Monthly violent trends
@@ -169,6 +181,82 @@
                 document.body.innerHTML += `<p style="color:red;">Failed to load chart data: ${err}</p>`;
                 console.error("Error loading charts:", err);
             });
+// Chart 4: Crime Type Distribution
+fetch('/api/crime_type_distribution')
+    .then(response => response.json())
+    .then(data => {
+        const typeLabels = data.map(item => item.crime_type);
+        const typeCounts = data.map(item => item.count);
+
+        new Chart(document.getElementById("crimeTypeChart"), {
+            type: 'bar',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    label: "Crime Type Frequency",
+                    data: typeCounts,
+                    backgroundColor: 'rgba(255, 205, 86, 0.6)',
+                    borderColor: 'rgba(255, 205, 86, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Number of Incidents"
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(err => {
+        console.error("Error loading crime type chart:", err);
+    });
+
+// Chart 5: Crime by Sector (Mapped to City)
+fetch('/api/crime_by_city')
+    .then(response => response.json())
+    .then(data => {
+        const labels = data.map(item => item.city);
+        const values = data.map(item => item.crime_count);
+
+        new Chart(document.getElementById("crimeByCityChart"), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Crimes by City Sector",
+                    data: values,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Number of Incidents"
+                        }
+                    }
+                }
+            }
+        });
+    })
+    .catch(err => {
+        console.error("Error loading crime by city chart:", err);
+    });
 
     </script>
 </body>

@@ -54,6 +54,37 @@ def top_crimes():
         "top_all_this_year": top_all_this_year.to_dict(orient='records')
     })
 
+@app.route('/api/crime_type_distribution')
+def crime_type_distribution():
+    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+    crime_counts = df['clearance_code_inc_type'].str.upper().value_counts().reset_index()
+    crime_counts.columns = ['crime_type', 'count']
+
+    return jsonify(crime_counts.to_dict(orient='records'))
+
+@app.route('/api/crime_by_city')
+def crime_by_city():
+    df = pd.read_csv('Crime_Incidents_July_2023_to_Present_20250516.csv', parse_dates=['Date'])
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+    sector_map = {
+        "H": "Hyattsville",
+        "B": "Bowie",
+        "G": "Greenbelt",
+        "W": "Oxon Hill",
+        "K": "Capitol Heights",
+        "M": "College Park"
+    }
+
+    df['city'] = df['pgpd_sector'].map(sector_map)
+    df = df.dropna(subset=['city'])
+
+    city_counts = df['city'].value_counts().reset_index()
+    city_counts.columns = ['city', 'crime_count']
+
+    return jsonify(city_counts.to_dict(orient='records'))
 
 
 if __name__ == '__main__':
