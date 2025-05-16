@@ -7,6 +7,12 @@ import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
+load_dotenv()  # Load from .env file
+
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_CHANNEL = os.getenv("SLACK_CHANNEL")
+
+
 # === Load Slack credentials ===
 load_dotenv()
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
